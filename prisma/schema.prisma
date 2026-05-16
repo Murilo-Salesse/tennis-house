@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relação com bookings
+  bookings  Booking[]
+
+  @@map("clients")
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  date      DateTime
+  timeSlotId String
+  timeSlot  TimeSlot @relation(fields: [timeSlotId], references: [id])
+  
+  status    String   @default("pending") // pending, confirmed, cancelled
+  value     Float
+  notes     String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bookings")
+}
+
+model TimeSlot {
+  id        String   @id @default(cuid())
+  startTime String   // Formato: "05:00"
+  endTime   String   // Formato: "06:00"
+  price     Float    @default(150.0)
+  available Boolean  @default(true)
+  dayOfWeek Int?     // 0-6 para aplicar a todos os dias ou null para todos
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relação com bookings
+  bookings  Booking[]
+
+  @@unique([startTime, endTime])
+  @@map("time_slots")
+}
+
+model CourtImage {
+  id        String   @id @default(cuid())
+  url       String
+  title     String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("court_images")
+}

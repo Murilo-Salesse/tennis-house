@@ -22,14 +22,32 @@ export default function Header() {
       <nav className="fixed top-0 left-0 w-full z-50 bg-emerald-50/70 backdrop-blur-xl shadow-[0px_12px_32px_rgba(25,28,26,0.06)]">
         <div className="flex justify-between items-center px-6 md:px-10 py-5 max-w-[1440px] mx-auto">
           <Link href="/" className="flex items-center gap-4">
-            <img alt="Tennis House Urbanova Logo" className="h-10 w-auto rounded-lg" src="/logo.jpeg" />
-            <span className="text-xl font-extrabold tracking-tighter text-primary font-headline">Tennis House Urbanova</span>
+            <img
+              alt="Tennis House Urbanova Logo"
+              className="h-10 w-auto rounded-lg"
+              src="/logo.jpeg"
+            />
+            <span className="text-xl font-extrabold tracking-tighter text-primary font-headline">
+              Tennis House Urbanova
+            </span>
           </Link>
           <div className="hidden md:flex items-center gap-8 font-['Manrope'] font-semibold tracking-tight">
-            <Link className={linkClass("/")} href="/">Início</Link>
-            <Link className={linkClass("/reservar")} href="/reservar">Reservar</Link>
-            <Link className={linkClass("/#localizacao")} href="/#localizacao">Localização</Link>
-            <Link href="/reservar" className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold transition-all duration-300 active:scale-95 shadow-lg shadow-primary/10">
+            <Link className={linkClass("/")} href="/">
+              Início
+            </Link>
+            <Link className={linkClass("/reservar")} href="/reservar">
+              Reservar
+            </Link>
+            <Link className={linkClass("/admin")} href="/admin">
+              Admin
+            </Link>
+            <Link className={linkClass("/#localizacao")} href="/#localizacao">
+              Localização
+            </Link>
+            <Link
+              href="/reservar"
+              className="bg-primary text-white px-6 py-2.5 rounded-lg font-bold transition-all duration-300 active:scale-95 shadow-lg shadow-primary/10"
+            >
               Reservar Agora
             </Link>
           </div>
@@ -47,18 +65,36 @@ export default function Header() {
           href="/"
         >
           <span className="material-symbols-outlined">home</span>
-          <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">Início</span>
+          <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">
+            Início
+          </span>
         </Link>
         <Link
           className={`flex flex-col items-center justify-center ${isActive("/reservar") ? "bg-secondary text-primary rounded-full px-6 py-2 shadow-lg shadow-secondary/20 scale-110" : "text-emerald-800/50"}`}
           href="/reservar"
         >
           <span className="material-symbols-outlined">calendar_today</span>
-          <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">Reservar</span>
+          <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">
+            Reservar
+          </span>
         </Link>
-        <Link className="flex flex-col items-center justify-center text-emerald-800/50" href="/#localizacao">
+        <Link
+          className={`flex flex-col items-center justify-center ${isActive("/admin") ? "bg-secondary text-primary rounded-full px-6 py-2 shadow-lg shadow-secondary/20 scale-110" : "text-emerald-800/50"}`}
+          href="/admin"
+        >
+          <span className="material-symbols-outlined">manage_accounts</span>
+          <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">
+            Admin
+          </span>
+        </Link>
+        <Link
+          className="flex flex-col items-center justify-center text-emerald-800/50"
+          href="/#localizacao"
+        >
           <span className="material-symbols-outlined">distance</span>
-          <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">Local</span>
+          <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">
+            Local
+          </span>
         </Link>
       </div>
     </>

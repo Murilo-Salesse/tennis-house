@@ -179,7 +179,7 @@ export default function ResumoPage() {
                       <span className="text-sm">Localização</span>
                     </div>
                     <span className="font-semibold text-white">
-                      Próximo a fazenda da vovó
+                      Próximo à Fazenda da Vovó
                     </span>
                   </div>
                 </div>

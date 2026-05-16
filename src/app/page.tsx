@@ -340,7 +340,7 @@ export default function Home() {
               variants={fadeInVariants}
               className="text-white text-4xl md:text-6xl font-extrabold tracking-tight leading-[0.95] mb-5"
             >
-              Tennis House - Próximo a fazenda da vovó
+              Tennis House - Próximo à Fazenda da Vovó
             </motion.h1>
             <motion.p
               variants={fadeInVariants}

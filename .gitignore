@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+SETUP_COMPLETO.md
+RESUMO_BANCO.md
 
 # debug
 npm-debug.log*

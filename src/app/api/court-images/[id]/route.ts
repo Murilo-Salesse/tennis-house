@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createClient } from "@supabase/supabase-js";
+
+const BUCKET_NAME = "court-images";
 
 type DynamicIdParams =
   | { params: { id: string } }
@@ -55,6 +58,38 @@ export async function PATCH(request: NextRequest, context: DynamicIdParams) {
 export async function DELETE(request: NextRequest, context: DynamicIdParams) {
   const params = await context.params;
   try {
+    const image = await prisma.courtImage.findUnique({
+      where: { id: params.id },
+    });
+
+    if (!image) {
+      return NextResponse.json({ error: "Image not found" }, { status: 404 });
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseSecretKey =
+      process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (supabaseUrl && supabaseSecretKey) {
+      const storagePath = getStoragePathFromPublicUrl(image.url);
+
+      if (storagePath) {
+        const supabase = createClient(supabaseUrl, supabaseSecretKey, {
+          auth: {
+            persistSession: false,
+          },
+        });
+
+        const { error: storageError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .remove([storagePath]);
+
+        if (storageError) {
+          console.error("Error deleting storage image:", storageError);
+        }
+      }
+    }
+
     await prisma.courtImage.delete({
       where: { id: params.id },
     });
@@ -66,5 +101,21 @@ export async function DELETE(request: NextRequest, context: DynamicIdParams) {
       { error: "Failed to delete image" },
       { status: 500 },
     );
+  }
+}
+
+function getStoragePathFromPublicUrl(url: string) {
+  try {
+    const pathname = new URL(url).pathname;
+    const marker = `/storage/v1/object/public/${BUCKET_NAME}/`;
+    const markerIndex = pathname.indexOf(marker);
+
+    if (markerIndex === -1) {
+      return null;
+    }
+
+    return decodeURIComponent(pathname.slice(markerIndex + marker.length));
+  } catch {
+    return null;
   }
 }

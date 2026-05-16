@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 interface Booking {
@@ -52,6 +52,7 @@ export default function AdminPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [savingSlotId, setSavingSlotId] = useState<string | null>(null);
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -203,6 +204,38 @@ export default function AdminPage() {
       setError(err instanceof Error ? err.message : "Erro ao enviar imagem.");
     } finally {
       setIsUploading(false);
+    }
+  }
+
+  async function handleDeleteImage(image: CourtImage) {
+    const confirmed = window.confirm(
+      `Excluir a foto "${image.title || "Sem titulo"}"? Essa acao nao pode ser desfeita.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingImageId(image.id);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch(`/api/court-images/${image.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Falha ao excluir imagem.");
+      }
+
+      setImages((current) => current.filter((item) => item.id !== image.id));
+      setMessage("Imagem excluida com sucesso.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir imagem.");
+    } finally {
+      setDeletingImageId(null);
     }
   }
 
@@ -686,6 +719,14 @@ export default function AdminPage() {
                           <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${image.active ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-surface-variant text-on-surface-variant border border-gray-300'}`}>
                             {image.active ? "Visível" : "Oculta"}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteImage(image)}
+                            disabled={deletingImageId === image.id}
+                            className="rounded-lg bg-red-600 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {deletingImageId === image.id ? "Excluindo..." : "Excluir"}
+                          </button>
                         </div>
                       </div>
                     </div>

@@ -4,8 +4,16 @@ import { prisma } from "@/lib/prisma";
 
 const BUCKET_NAME = "court-images";
 
+function createSupabaseAdminClient(url: string, serviceRoleKey: string) {
+  return createClient(url, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+    },
+  });
+}
+
 async function ensureBucket(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
 ): Promise<NextResponse | null> {
   const { data: bucket, error: getBucketError } =
     await supabase.storage.getBucket(BUCKET_NAME);
@@ -94,11 +102,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        persistSession: false,
-      },
-    });
+    const supabase = createSupabaseAdminClient(
+      supabaseUrl,
+      supabaseServiceRoleKey,
+    );
 
     const bucketErrorResponse = await ensureBucket(supabase);
     if (bucketErrorResponse) {

@@ -728,7 +728,10 @@ export default function Home() {
                   <p className="text-xs font-bold text-secondary uppercase tracking-widest mb-1">
                     Ponto de Referência
                   </p>
-                  <p className="text-primary font-bold">Fazenda da vovó</p>
+                  <p className="text-primary font-bold">
+                    {" "}
+                    Próximo à Fazenda da Vovó
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white">
                   <span className="material-symbols-outlined">

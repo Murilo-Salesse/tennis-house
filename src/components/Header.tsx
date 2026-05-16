@@ -38,9 +38,6 @@ export default function Header() {
             <Link className={linkClass("/reservar")} href="/reservar">
               Reservar
             </Link>
-            <Link className={linkClass("/admin")} href="/admin">
-              Admin
-            </Link>
             <Link className={linkClass("/#localizacao")} href="/#localizacao">
               Localização
             </Link>
@@ -76,15 +73,6 @@ export default function Header() {
           <span className="material-symbols-outlined">calendar_today</span>
           <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">
             Reservar
-          </span>
-        </Link>
-        <Link
-          className={`flex flex-col items-center justify-center ${isActive("/admin") ? "bg-secondary text-primary rounded-full px-6 py-2 shadow-lg shadow-secondary/20 scale-110" : "text-emerald-800/50"}`}
-          href="/admin"
-        >
-          <span className="material-symbols-outlined">manage_accounts</span>
-          <span className="font-['Inter'] text-[10px] uppercase tracking-widest font-bold mt-1">
-            Admin
           </span>
         </Link>
         <Link

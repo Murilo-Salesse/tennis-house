@@ -660,7 +660,7 @@ export default function AdminPage() {
                     <button
                       type="submit"
                       disabled={isUploading}
-                      className="w-full sm:w-auto rounded-2xl bg-secondary px-8 py-3.5 text-sm font-bold text-primary transition hover:bg-secondary/90 disabled:opacity-60"
+                      className="w-full sm:w-auto rounded-2xl bg-secondary px-8 py-3.5 text-sm font-bold text-white transition hover:bg-secondary/90 disabled:opacity-60"
                     >
                       {isUploading ? "Enviando Imagem..." : "Fazer Upload"}
                     </button>

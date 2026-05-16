@@ -1,17 +1,81 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
+const BUCKET_NAME = "court-images";
 
-// Usamos a SERVICE_ROLE_KEY para ter permissão de upload ignorando RLS
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+async function ensureBucket(
+  supabase: ReturnType<typeof createClient>,
+): Promise<NextResponse | null> {
+  const { data: bucket, error: getBucketError } =
+    await supabase.storage.getBucket(BUCKET_NAME);
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+  if (!getBucketError) {
+    if (!bucket.public) {
+      const { error: updateBucketError } = await supabase.storage.updateBucket(
+        BUCKET_NAME,
+        { public: true },
+      );
+
+      if (updateBucketError) {
+        console.error("Supabase bucket update error:", updateBucketError);
+        return NextResponse.json(
+          { error: "Nao foi possivel tornar o bucket de imagens publico." },
+          { status: 500 },
+        );
+      }
+    }
+
+    return null;
+  }
+
+  const bucketNotFound =
+    getBucketError.message.toLowerCase().includes("not found") ||
+    getBucketError.message.toLowerCase().includes("does not exist");
+
+  if (!bucketNotFound) {
+    console.error("Supabase bucket check error:", getBucketError);
+    return NextResponse.json(
+      { error: "Nao foi possivel validar o bucket de imagens no Supabase." },
+      { status: 500 },
+    );
+  }
+
+  const { error: createBucketError } = await supabase.storage.createBucket(
+    BUCKET_NAME,
+    {
+      public: true,
+      allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+      fileSizeLimit: 1024 * 1024 * 8,
+    },
+  );
+
+  if (createBucketError) {
+    console.error("Supabase bucket create error:", createBucketError);
+    return NextResponse.json(
+      { error: "Nao foi possivel criar o bucket 'court-images' no Supabase." },
+      { status: 500 },
+    );
+  }
+
+  return null;
+}
 
 export async function POST(request: Request) {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      return NextResponse.json(
+        {
+          error:
+            "Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY para enviar imagens.",
+        },
+        { status: 500 },
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const title = formData.get("title") as string | null;
@@ -19,46 +83,55 @@ export async function POST(request: Request) {
     if (!file) {
       return NextResponse.json(
         { error: "Nenhum arquivo enviado." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // 1. Converter File em Buffer para o Supabase
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json(
+        { error: "Envie um arquivo de imagem valido." },
+        { status: 400 },
+      );
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false,
+      },
+    });
+
+    const bucketErrorResponse = await ensureBucket(supabase);
+    if (bucketErrorResponse) {
+      return bucketErrorResponse;
+    }
+
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const fileName = `quadra-${crypto.randomUUID()}.${fileExt}`;
 
-    // Gerar um nome único para o arquivo
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const fileExt = file.name.split('.').pop();
-    const fileName = `quadra-${uniqueSuffix}.${fileExt}`;
-
-    // 2. Fazer o upload para o Supabase Storage (bucket: court-images)
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("court-images")
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET_NAME)
       .upload(fileName, buffer, {
         contentType: file.type,
         upsert: false,
       });
 
     if (uploadError) {
-      console.error("Supabase Upload Error:", uploadError);
+      console.error("Supabase upload error:", uploadError);
       return NextResponse.json(
-        { error: "Erro ao fazer upload no Supabase. Verifique se o bucket 'court-images' existe e se as chaves estão corretas." },
-        { status: 500 }
+        { error: "Nao foi possivel enviar a imagem para o Supabase Storage." },
+        { status: 500 },
       );
     }
 
-    // 3. Pegar a URL pública da imagem
     const { data: publicUrlData } = supabase.storage
-      .from("court-images")
+      .from(BUCKET_NAME)
       .getPublicUrl(fileName);
 
-    const publicUrl = publicUrlData.publicUrl;
-
-    // 4. Salvar no banco de dados via Prisma
     const newImage = await prisma.courtImage.create({
       data: {
-        url: publicUrl,
+        url: publicUrlData.publicUrl,
         title: title || file.name,
         active: true,
       },
@@ -69,7 +142,7 @@ export async function POST(request: Request) {
     console.error("Upload error:", error);
     return NextResponse.json(
       { error: "Erro interno no servidor ao processar imagem." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

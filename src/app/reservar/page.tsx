@@ -55,6 +55,13 @@ function formatDateLong(date: Date): string {
   return `${day} de ${month}, ${year}`;
 }
 
+function formatDateParam(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function ReservarPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -107,6 +114,15 @@ export default function ReservarPage() {
   const selectedSlot = selectedTime
     ? ALL_SLOTS.find((s) => s.time === selectedTime)
     : null;
+
+  const reservationHref = selectedSlot
+    ? `/reservar/resumo?${new URLSearchParams({
+        date: formatDateParam(selectedDate),
+        time: selectedSlot.time,
+        endTime: selectedSlot.endTime,
+        price: String(selectedSlot.price),
+      }).toString()}`
+    : "/reservar/resumo";
 
   const isToday = (date: Date) =>
     date.getDate() === today.getDate() &&
@@ -412,7 +428,7 @@ export default function ReservarPage() {
                 </div>
                 {selectedTime ? (
                   <Link
-                    href="/reservar/resumo"
+                    href={reservationHref}
                     className="w-full bg-secondary-container hover:bg-[#c9d456] text-primary font-bold py-4 rounded-lg transition-all active:scale-95 flex items-center justify-center space-x-2"
                   >
                     <span>Próximo Passo</span>

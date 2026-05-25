@@ -199,29 +199,79 @@ function formatDateLong(date: Date): string {
   return `${day} de ${month}, ${year}`;
 }
 
+function formatDateParam(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function Home() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [displayMonth, setDisplayMonth] = useState<number>(today.getMonth());
+  const [displayYear, setDisplayYear] = useState<number>(today.getFullYear());
 
   const calendarDays = useMemo(() => {
     const days: Date[] = [];
-    for (let i = 0; i < 28; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      days.push(d);
-    }
-    return days;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const lastDay = new Date(displayYear, displayMonth + 1, 0);
 
-  const firstDayWeekday = calendarDays[0].getDay();
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      days.push(new Date(displayYear, displayMonth, day));
+    }
+
+    return days;
+  }, [displayMonth, displayYear]);
+
+  const firstDayWeekday = new Date(displayYear, displayMonth, 1).getDay();
 
   const selectedSlot = selectedTime
     ? TIME_SLOTS.find((s) => s.time === selectedTime)
     : null;
+
+  const yearOptions = Array.from(
+    { length: 2050 - today.getFullYear() + 1 },
+    (_, i) => today.getFullYear() + i,
+  );
+
+  const handleDisplayMonthChange = (month: number) => {
+    const nextDate =
+      displayYear === today.getFullYear() && month === today.getMonth()
+        ? new Date(today)
+        : new Date(displayYear, month, 1);
+
+    setDisplayMonth(month);
+    setSelectedDate(nextDate);
+    setSelectedTime(null);
+  };
+
+  const handleDisplayYearChange = (year: number) => {
+    const nextMonth =
+      year === today.getFullYear() && displayMonth < today.getMonth()
+        ? today.getMonth()
+        : displayMonth;
+
+    setDisplayYear(year);
+    setDisplayMonth(nextMonth);
+    setSelectedDate(
+      year === today.getFullYear() && nextMonth === today.getMonth()
+        ? new Date(today)
+        : new Date(year, nextMonth, 1),
+    );
+    setSelectedTime(null);
+  };
+
+  const reservationHref = selectedSlot
+    ? `/reservar/resumo?${new URLSearchParams({
+        date: formatDateParam(selectedDate),
+        time: selectedSlot.time,
+        endTime: selectedSlot.endTime,
+        price: String(selectedSlot.price),
+      }).toString()}`
+    : "/reservar/resumo";
 
   const isToday = (date: Date) =>
     date.getDate() === today.getDate() &&
@@ -232,6 +282,8 @@ export default function Home() {
     date.getDate() === selectedDate.getDate() &&
     date.getMonth() === selectedDate.getMonth() &&
     date.getFullYear() === selectedDate.getFullYear();
+
+  const isPastDate = (date: Date) => date < today;
 
   const morningSlots = TIME_SLOTS.filter((s) => s.period === "morning");
   const afternoonSlots = TIME_SLOTS.filter((s) => s.period === "afternoon");
@@ -419,6 +471,51 @@ export default function Home() {
                     Escolha a Data
                   </h3>
                 </div>
+                <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                      Mês
+                    </span>
+                    <select
+                      value={displayMonth}
+                      onChange={(event) =>
+                        handleDisplayMonthChange(Number(event.target.value))
+                      }
+                      className="h-12 w-full rounded-xl border border-surface-variant bg-surface-container-high px-4 text-sm font-bold text-primary outline-none transition focus:ring-2 focus:ring-secondary-container"
+                    >
+                      {MONTH_NAMES.map((month, index) => (
+                        <option
+                          key={month}
+                          value={index}
+                          disabled={
+                            displayYear === today.getFullYear() &&
+                            index < today.getMonth()
+                          }
+                        >
+                          {month}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                      Ano
+                    </span>
+                    <select
+                      value={displayYear}
+                      onChange={(event) =>
+                        handleDisplayYearChange(Number(event.target.value))
+                      }
+                      className="h-12 w-full rounded-xl border border-surface-variant bg-surface-container-high px-4 text-sm font-bold text-primary outline-none transition focus:ring-2 focus:ring-secondary-container"
+                    >
+                      {yearOptions.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
                 <div className="grid grid-cols-7 gap-1.5 md:gap-2 text-center">
                   {WEEKDAY_LABELS.map((label) => (
                     <div
@@ -434,15 +531,19 @@ export default function Home() {
                   {calendarDays.map((date, i) => {
                     const selected = isSelected(date);
                     const todayFlag = isToday(date);
+                    const disabled = isPastDate(date);
                     return (
                       <button
                         key={i}
+                        disabled={disabled}
                         onClick={() => {
                           setSelectedDate(date);
                           setSelectedTime(null);
                         }}
                         className={`h-12 md:h-14 flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
-                          selected
+                          disabled
+                            ? "bg-surface-container text-on-surface-variant/30 cursor-not-allowed"
+                            : selected
                             ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
                             : todayFlag
                               ? "bg-secondary/20 text-primary ring-2 ring-secondary hover:bg-primary hover:text-white"
@@ -556,7 +657,7 @@ export default function Home() {
                   </div>
                   {selectedTime ? (
                     <a
-                      href="/reservar"
+                      href={reservationHref}
                       className="w-full bg-secondary-container hover:brightness-110 text-primary font-bold py-4 rounded-xl transition-all active:scale-95 flex items-center justify-center space-x-2 shadow-lg shadow-secondary-container/30"
                     >
                       <span>Confirmar Reserva</span>

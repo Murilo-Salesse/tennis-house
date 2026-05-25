@@ -30,7 +30,6 @@ interface ReservationData {
 interface CustomerData {
   name: string;
   email: string;
-  phone: string;
   whatsapp: string;
   notes: string;
 }
@@ -91,7 +90,6 @@ export default function ResumoPage() {
   const [customer, setCustomer] = useState<CustomerData>({
     name: "",
     email: "",
-    phone: "",
     whatsapp: "",
     notes: "",
   });
@@ -111,7 +109,6 @@ export default function ResumoPage() {
       "",
       `Nome: ${customer.name}`,
       `Email: ${customer.email}`,
-      `Telefone: ${customer.phone}`,
       `WhatsApp: ${customer.whatsapp}`,
       customer.notes ? `Observações: ${customer.notes}` : null,
       "",
@@ -213,25 +210,6 @@ export default function ResumoPage() {
                     onChange={handleCustomerChange}
                     placeholder="voce@email.com"
                     type="email"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label
-                    className="font-label text-xs uppercase tracking-widest font-bold text-on-surface-variant px-1"
-                    htmlFor="phone"
-                  >
-                    Telefone
-                  </label>
-                  <input
-                    required
-                    className="w-full bg-surface-container border-none focus:ring-2 focus:ring-secondary-container/40 rounded-sm py-4 px-5 text-on-surface font-body transition-all"
-                    id="phone"
-                    name="phone"
-                    value={customer.phone}
-                    onChange={handleCustomerChange}
-                    placeholder="(12) 99999-9999"
-                    type="tel"
                   />
                 </div>
 
